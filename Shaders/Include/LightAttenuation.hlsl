@@ -57,39 +57,51 @@ half3 GetMainColorAndAttenuation(half3 color, float3 worldPosition, out float at
     return color;
 }
 
-
 // Light color is stored in xyz, and attenuation is stored in w.
 half3 GetColorAndAttenuation(float3 worldPosition, int additionalLightIndex, out float3 lightDirection, out float attenuation)
 {
     VolumeLight light = GetAdditionalLight(additionalLightIndex);
 
-    lightDirection = light.position.xyz - worldPosition * light.position.w;
+    if (light.position.w == 0.0)
+    {
+        lightDirection = normalize(light.position.xyz);
 
-    if (light.shadowIndex < 0)
-        return GetMainColorAndAttenuation(light.color, worldPosition, attenuation);
+        attenuation = 1.0;
+
+        if (light.shadowIndex == -1)
+            return GetMainColorAndAttenuation(light.color, worldPosition, attenuation);
+
+        return light.color;
+    }
+
+    lightDirection = light.position.xyz - worldPosition;
 
     float distanceSqr = max(sqrlen(lightDirection), HALF_MIN);
-
-    // A reciprocal square root in a nested shader loop is kind of scary... but it doesn't seem to hurt performance too much
     float rsqr = rsqrt(distanceSqr);
 
-    half3 color = light.color;
     lightDirection = lightDirection * rsqr;
 
-    float distAttenuation = DistanceAttenuation(distanceSqr, light.attenuation.xy) * AngleAttenuation(light.spotDirection.xyz, lightDirection, light.attenuation.zw);
+    float distAttenuation =
+        DistanceAttenuation(distanceSqr, light.attenuation.xy) *
+        AngleAttenuation(light.spotDirection.xyz, lightDirection, light.attenuation.zw);
+
     attenuation = distAttenuation;
 
-    color *= distAttenuation;
+    half3 color = light.color * distAttenuation;
 
-    #if defined(SHADOWS_ENABLED)
-        float shadAttenuation = AdditionalLightRealtimeShadow(light.shadowIndex, worldPosition, lightDirection);
-        color *= shadAttenuation;
-        attenuation *= shadAttenuation;
-    #endif
+#if defined(SHADOWS_ENABLED)
+        if (light.shadowIndex >= 0)
+        {
+            float shadAttenuation = AdditionalLightRealtimeShadow(light.shadowIndex, worldPosition, lightDirection);
+            color *= shadAttenuation;
+            attenuation *= shadAttenuation;
+        }
+#endif
 
-    #if defined(_LIGHT_COOKIES)
-        color *= SampleAdditionalLightCookie(light.shadowIndex, worldPosition);
-    #endif
+#if defined(_LIGHT_COOKIES)
+        if (light.shadowIndex >= 0)
+            color *= SampleAdditionalLightCookie(light.shadowIndex, worldPosition);
+#endif
 
     return color;
 }

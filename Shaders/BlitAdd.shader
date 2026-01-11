@@ -50,16 +50,19 @@ Shader "Hidden/BlitAdd"
 			SAMPLER(sampler_BlitAdd);
 
 
-			half3 blendFrag(v2f i) : SV_Target
-			{
-				half3 base = SAMPLE_BASE(_BlitSource, sampler_BlitSource, i.uv);
-				half4 add = SAMPLE_BASE(_BlitAdd, sampler_BlitAdd, i.uv);
+float4 blendFrag(v2f i) : SV_Target
+{
+    float3 baseCol = SAMPLE_BASE(_BlitSource, sampler_BlitSource, i.uv).rgb;
+    float4 fog     = SAMPLE_BASE(_BlitAdd, sampler_BlitAdd, i.uv);
 
-				// Hacky blend- the stronger the fog transmittance, the less of the original color.
-				float srcFactor = 1 - saturate(add.w);
+    // fog.a should be opacity in [0..1]
+    float srcFactor = 1.0 - saturate(fog.a);
 
-				return (base * srcFactor) + add;
-			}
+    float3 outCol = baseCol * srcFactor + fog.rgb;
+    //return float4(0.1, 0.0, 0.0, 0.2);
+
+	return float4(outCol, 1.0);
+}
 
 			ENDHLSL
 		}

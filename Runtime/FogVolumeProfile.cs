@@ -161,7 +161,7 @@ namespace Sinnwrig.FogVolumes
         private void OnDestroy() => DestroyImmediate(material);
 
 
-        public Material GetMaterial(Shader shader, CommandBuffer cmd)
+        public Material GetMaterial(Shader shader, UnsafeCommandBuffer cmd)
         {
             if (material == null)
                 material = new Material(shader);
@@ -176,14 +176,14 @@ namespace Sinnwrig.FogVolumes
         }
 
 
-        public void SetupProperties(CommandBuffer cmd)
+        public void SetupProperties(UnsafeCommandBuffer cmd)
         {
             SetupLighting(cmd);
             SetupNoise(cmd);
         }
 
 
-        private void SetupNoise(CommandBuffer cmd)
+        private void SetupNoise(UnsafeCommandBuffer cmd)
         {
             material.SetKeyword(noiseKeyword.Value, noiseTexture != null);
 
@@ -198,7 +198,7 @@ namespace Sinnwrig.FogVolumes
         }
 
 
-        private void SetupLighting(CommandBuffer cmd)
+        private void SetupLighting(UnsafeCommandBuffer cmd)
         {
             material.SetVector("_Ambient", ambientColor);
             material.SetFloat("_AmbientOpacity", ambientOpacity);

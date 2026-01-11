@@ -86,7 +86,7 @@ namespace Sinnwrig.FogVolumes
         {
 #if UNITY_EDITOR
             if (data == null)
-                data = AssetDatabase.LoadAssetAtPath<FogVolumeData>("Packages/com.sinnwrig.fogvolumes/Runtime/Data/FogVolumeData.asset");
+                data = AssetDatabase.LoadAssetAtPath<FogVolumeData>("Assets/Runtime/Data/FogVolumeData.asset");
 #endif
 
             if (data == null)

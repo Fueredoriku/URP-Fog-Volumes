@@ -24,7 +24,7 @@ namespace Sinnwrig.FogVolumes
         };
 
 
-        internal static void SetResolutionKeyword(this VolumetricResolution type, CommandBuffer cmd)
+        internal static void SetResolutionKeyword(this VolumetricResolution type, UnsafeCommandBuffer cmd)
         {
             for (int i = 0; i < resolutionKeywords.Length; i++)
                 cmd.SetKeyword(resolutionKeywords[i], i == (int)type);

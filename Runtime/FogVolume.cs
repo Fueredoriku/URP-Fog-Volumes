@@ -142,6 +142,18 @@ namespace Sinnwrig.FogVolumes
             PropertyBlock.SetVector("_ViewportRect", viewport);
         }
 
+        private void SetupViewport(ref Camera camera)
+        {
+            Vector3[] boundsPoints = volumeType == VolumeType.Capsule || volumeType == VolumeType.Cylinder ? BoundsUtility.capsuleCorners : BoundsUtility.cubeCorners;
+
+            Vector4 viewport = BoundsUtility.GetViewportRect(transform.localToWorldMatrix, camera, boundsPoints);
+
+            if (BoundsUtility.InsideBounds(transform.worldToLocalMatrix, camera.transform.position, GetBounds()))
+                viewport = new Vector4(0, 0, 1, 1);
+
+            PropertyBlock.SetVector("_ViewportRect", viewport);
+        }
+
 
         private Vector3 EdgeFade(out Vector3 offset)
         {
@@ -223,7 +235,10 @@ namespace Sinnwrig.FogVolumes
 
 
         // Not public since some global properties must be set for the shader to render correctly. 
-        internal void DrawVolume(ref RenderingData renderingData, CommandBuffer cmd, Shader shader, List<NativeLight> lights, int maxLights)
+        /*
+        internal void DrawVolume(Camera camera, in RenderTextureDescriptor cameraTargetDesc, bool isSceneViewCamera,
+                         UnsafeCommandBuffer cmd, Shader shader, List<NativeLight> lights, int maxLights)
+
         {
             PropertyBlock.SetVector("_FogRange", new Vector2(maxDistance, Mathf.Lerp(0, maxDistance, distanceFade - 0.001f)));
 
@@ -232,6 +247,23 @@ namespace Sinnwrig.FogVolumes
             volumeType.SetVolumeKeyword(cmd);
 
             SetupViewport(ref renderingData);
+            SetupLighting(lights, maxLights);
+
+            PropertyBlock.SetMatrix("_InverseVolumeMatrix", transform.worldToLocalMatrix);
+
+            cmd.DrawMesh(MeshUtility.FullscreenQuad, Matrix4x4.identity, material, 0, 0, PropertyBlock);
+        }
+        */
+        internal void DrawVolume(Camera camera, in RenderTextureDescriptor cameraTargetDesc, bool isSceneViewCamera,
+                          UnsafeCommandBuffer cmd, Shader shader, List<NativeLight> lights, int maxLights)
+        {
+            PropertyBlock.SetVector("_FogRange", new Vector2(maxDistance, Mathf.Lerp(0, maxDistance, distanceFade - 0.001f)));
+
+            Material material = ProfileReference.GetMaterial(shader, cmd);
+
+            volumeType.SetVolumeKeyword(cmd);
+
+            SetupViewport(ref camera);
             SetupLighting(lights, maxLights);
 
             PropertyBlock.SetMatrix("_InverseVolumeMatrix", transform.worldToLocalMatrix);
